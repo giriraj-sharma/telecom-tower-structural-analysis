@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090d16">
+  <meta name="description" content="Preliminary structural analysis and design optimization for telecom lattice towers.">
+  <title>TowerLab | Structural Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">T</div>
+      <div><div class="brand-title">TOWERLAB</div><div class="brand-subtitle">Structural analysis workstation</div></div>
+    </div>
+    <div class="header-actions">
+      <div class="preset-pill-group" role="group" aria-label="Load a sample tower">
+        <button class="preset-btn" data-preset="30m">30 m</button>
+        <button class="preset-btn active" data-preset="40m">40 m</button>
+        <button class="preset-btn" data-preset="50m">50 m</button>
+      </div>
+      <button class="action-btn btn-secondary" id="optimize-button" title="Compare design candidates">Optimize</button>
+      <button class="action-btn btn-primary" id="analyze-button" title="Run structural analysis">Run analysis</button>
+      <div class="export-menu">
+        <button class="action-btn btn-secondary" id="export-menu-button" aria-expanded="false">Export <span aria-hidden="true">⌄</span></button>
+        <div class="export-options" id="export-options" hidden>
+          <button type="button" data-export="pdf">Calculation report (PDF)</button>
+          <button type="button" data-export="dxf">Tower geometry (DXF)</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="disclaimer-banner"><strong>PRELIMINARY ANALYSIS</strong><span>Educational design aid only. Not for certified structural construction.</span></div>
+
+  <main class="app-container">
+    <aside class="controls-panel" aria-label="Tower design inputs">
+      <div class="panel-heading"><div><span class="eyebrow">DESIGN INPUT</span><h1>Tower configuration</h1></div><span id="input-state" class="connection-state">Loading</span></div>
+      <form id="tower-form">
+        <div id="field-groups" class="field-groups"><div class="empty-state">Loading tower parameters...</div></div>
+        <details class="equipment-editor">
+          <summary>Equipment schedule <span id="equipment-count"></span></summary>
+          <label for="equipment-json">Edit antenna, dish and radio unit loading</label>
+          <textarea id="equipment-json" rows="10" spellcheck="false" aria-describedby="equipment-help"></textarea>
+          <span class="field-note" id="equipment-help">Enter a JSON array of equipment items.</span>
+        </details>
+        <button type="submit" class="action-btn btn-primary run-wide">Run structural analysis</button>
+      </form>
+      <p class="panel-footnote">Model checks: wind, dead load, member capacity, deflection and load combinations.</p>
+    </aside>
+
+    <section class="workstation" aria-label="Analysis results">
+      <div class="workstation-heading"><div><span class="eyebrow">ANALYSIS / LIVE MODEL</span><h2 id="result-heading">40 m lattice tower</h2></div><span class="run-stamp" id="run-stamp">Ready to analyze</span></div>
+      <section class="kpi-grid" id="kpi-grid" aria-live="polite">
+        <div class="kpi-card"><span class="kpi-label">Structural status</span><strong class="kpi-value">--</strong><span class="kpi-sub">Run analysis to calculate</span></div>
+        <div class="kpi-card"><span class="kpi-label">Peak utilization</span><strong class="kpi-value">--</strong><span class="kpi-sub">Member demand / capacity</span></div>
+        <div class="kpi-card"><span class="kpi-label">Base shear</span><strong class="kpi-value">--</strong><span class="kpi-sub">kN</span></div>
+        <div class="kpi-card"><span class="kpi-label">Overturning moment</span><strong class="kpi-value">--</strong><span class="kpi-sub">kN m</span></div>
+        <div class="kpi-card"><span class="kpi-label">Top deflection</span><strong class="kpi-value">--</strong><span class="kpi-sub">mm</span></div>
+      </section>
+
+      <nav class="tabs-nav" aria-label="Result views">
+        <button class="tab-btn active" data-tab="model">3D model</button>
+        <button class="tab-btn" data-tab="members">Members &amp; loads</button>
+        <button class="tab-btn" data-tab="optimization">Optimization</button>
+        <button class="tab-btn" data-tab="calculations">Calculations</button>
+      </nav>
+
+      <section class="tab-content active" id="tab-model">
+        <div class="viewer-container">
+          <div id="canvas-3d" aria-label="Interactive 3D tower model"></div>
+          <div class="viewer-overlay"><strong id="model-label">No analysis loaded</strong><span>Drag to orbit · scroll to zoom</span></div>
+          <div class="viewer-controls-bar">
+            <button class="viewer-ctrl-btn" id="rotate-button" title="Toggle model rotation" aria-label="Toggle model rotation">Rotate</button>
+            <button class="viewer-ctrl-btn" id="wind-button" title="Toggle wind vectors" aria-label="Toggle wind vectors">Wind on</button>
+            <button class="viewer-ctrl-btn" id="camera-button" title="Reset camera" aria-label="Reset camera">Reset view</button>
+          </div>
+          <div class="viewer-legend"><div class="legend-item"><span class="legend-color" style="background:#10b981"></span>Within limits</div><div class="legend-item"><span class="legend-color" style="background:#f59e0b"></span>Near capacity</div><div class="legend-item"><span class="legend-color" style="background:#ef4444"></span>Over capacity</div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card"><h3 class="chart-title">Panel wind force <span>(kN)</span></h3><div class="chart-canvas-wrapper"><canvas id="wind-chart" aria-label="Wind force by tower elevation"></canvas></div></div>
+          <div class="chart-card"><h3 class="chart-title">Deflection profile <span>(mm)</span></h3><div class="chart-canvas-wrapper"><canvas id="deflection-chart" aria-label="Deflection by tower elevation"></canvas></div></div>
+        </div>
+      </section>
+
+      <section class="tab-content" id="tab-members">
+        <div class="data-table-card"><div class="table-header"><h3 class="table-title">Critical members</h3><span id="member-count" class="table-meta">Run analysis to populate</span></div><div class="table-scroll"><table class="engineering-table"><thead><tr><th>Member</th><th>Type</th><th>Elevation</th><th>Section</th><th>Axial force</th><th>Capacity</th><th>Utilization</th><th>Status</th></tr></thead><tbody id="members-body"><tr><td colspan="8" class="empty-row">No results yet</td></tr></tbody></table></div></div>
+        <div class="data-table-card"><div class="table-header"><h3 class="table-title">Load combinations</h3><span class="table-meta">Governing design cases</span></div><div class="table-scroll"><table class="engineering-table"><thead><tr><th>Combination</th><th>Base shear (kN)</th><th>Moment (kN m)</th><th>Deflection (mm)</th><th>Leg utilization</th><th>Brace utilization</th><th>Status</th></tr></thead><tbody id="combinations-body"><tr><td colspan="7" class="empty-row">No results yet</td></tr></tbody></table></div></div>
+      </section>
+
+      <section class="tab-content" id="tab-optimization">
+        <div class="optimization-summary" id="optimization-summary">Run optimization to compare design candidates and estimated costs.</div>
+        <div class="optimization-grid" id="optimization-grid"></div>
+      </section>
+
+      <section class="tab-content" id="tab-calculations">
+        <div class="data-table-card"><div class="table-header"><h3 class="table-title">Analysis summary</h3><span class="table-meta">Engineering units shown</span></div><div id="calculation-summary" class="calculation-grid"><p class="empty-state">Run an analysis to see intermediate calculations.</p></div></div>
+        <div class="data-table-card"><div class="table-header"><h3 class="table-title">Tower geometry</h3><span id="geometry-count" class="table-meta">No geometry loaded</span></div><div class="table-scroll"><table class="engineering-table"><thead><tr><th>Node ID</th><th>X (m)</th><th>Y (m)</th><th>Elevation (m)</th></tr></thead><tbody id="geometry-body"><tr><td colspan="4" class="empty-row">No results yet</td></tr></tbody></table></div></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="loading-overlay" role="status" aria-live="polite"><div class="spinner"></div><span id="loading-message">Calculating structural response...</span></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <footer>Preliminary engineering analysis · Verify all assumptions and applicable standards with a licensed structural engineer.</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="/static/js/viewer3d.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
+</body>
+</html>
